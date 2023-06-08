@@ -39,6 +39,7 @@ async function run() {
     // <---crownArtDB collections--->
 
     const usersCollection = client.db("crownArtDB").collection("users");
+    const classesCollection = client.db("crownArtDB").collection("classes");
 
     // <---users collections apis--->
 
@@ -60,6 +61,13 @@ async function run() {
         const result = await usersCollection.insertOne(user);
         res.send(result);
       }
+    });
+
+    // <---classes collections apis--->
+
+    app.post("/classes", async (req, res) => {
+      const result = await classesCollection.insertOne(req.body);
+      res.send(result);
     });
   } finally {
     // Ensures that the client will close when you finish/error
