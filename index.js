@@ -72,7 +72,20 @@ async function run() {
         },
       };
 
-      const result = await userCollection.updateOne(query, updateDoc);
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    app.patch("/users/instructor/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+
+      const updateDoc = {
+        $set: {
+          role: "instructor",
+        },
+      };
+
+      const result = await usersCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
