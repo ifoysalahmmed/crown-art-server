@@ -96,7 +96,7 @@ async function run() {
 
     // <---users collections apis--->
 
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -179,8 +179,44 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/classes/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await classesCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.get("/classes/instructor/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+
+      const query = { email: email };
+
+      const result = await classesCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.post("/classes", async (req, res) => {
       const result = await classesCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    app.put("/classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const info = req.body;
+
+      const filter = { _id: new ObjectId(id) };
+
+      const updateDoc = {
+        $set: {
+          name: info.name,
+          seats: info.seats,
+          price: info.price,
+        },
+      };
+
+      const result = await classesCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
   } finally {
