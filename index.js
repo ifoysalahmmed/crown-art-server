@@ -198,7 +198,9 @@ async function run() {
     // <---classes collections apis--->
 
     app.get("/classes", async (req, res) => {
-      const result = await classesCollection.find().toArray();
+      const result = await classesCollection
+        .find({ status: "approved" })
+        .toArray();
       res.send(result);
     });
 
@@ -331,6 +333,16 @@ async function run() {
       const classItem = req.body;
 
       const result = await bookingsCollection.insertOne(classItem);
+      res.send(result);
+    });
+
+    // TODO: delete not working
+    app.delete("/classBookings/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await bookingsCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
