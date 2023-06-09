@@ -101,21 +101,6 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-
-      const query = { email: user.email };
-
-      const existingUser = await usersCollection.findOne(query);
-
-      if (existingUser) {
-        res.send({ message: "user already exists" });
-      } else {
-        const result = await usersCollection.insertOne(user);
-        res.send(result);
-      }
-    });
-
     app.get("/users/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -131,6 +116,8 @@ async function run() {
       res.send(result);
     });
 
+    // 1
+
     app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
 
@@ -144,6 +131,21 @@ async function run() {
 
       const result = { instructor: user?.role === "instructor" };
       res.send(result);
+    });
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+
+      const query = { email: user.email };
+
+      const existingUser = await usersCollection.findOne(query);
+
+      if (existingUser) {
+        res.send({ message: "user already exists" });
+      } else {
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      }
     });
 
     app.patch("/users/admin/:id", async (req, res) => {
@@ -178,6 +180,8 @@ async function run() {
       const result = await classesCollection.find().toArray();
       res.send(result);
     });
+
+    // 2
 
     app.get("/classes/:id", async (req, res) => {
       const id = req.params.id;
@@ -217,6 +221,28 @@ async function run() {
       };
 
       const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.put("/classes/admin/feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const info = req.body;
+
+      const query = { _id: new ObjectId(id) };
+
+      const options = { upsert: true };
+
+      const updateDoc = {
+        $set: {
+          feedback: info.feedback,
+        },
+      };
+
+      const result = await classesCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
 
