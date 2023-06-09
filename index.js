@@ -186,7 +186,14 @@ async function run() {
       res.send(result);
     });
 
-    // 2
+    app.get("/popularClasses", async (req, res) => {
+      const result = await classesCollection
+        .find({ status: "approved" })
+        .limit(6)
+        .sort({ seats: -1 })
+        .toArray();
+      res.send(result);
+    });
 
     app.get("/classes/:id", async (req, res) => {
       const id = req.params.id;
