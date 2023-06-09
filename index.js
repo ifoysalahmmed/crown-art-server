@@ -65,6 +65,7 @@ async function run() {
 
     const usersCollection = client.db("crownArtDB").collection("users");
     const classesCollection = client.db("crownArtDB").collection("classes");
+    const bookingsCollection = client.db("crownArtDB").collection("bookings");
 
     // <---json web token apis--->
 
@@ -125,10 +126,11 @@ async function run() {
       res.send(result);
     });
 
+    // TODO: need to fixed issue of not getting data
     app.get("/users/instructors", async (req, res) => {
-      const result = await usersCollection
-        .find({ role: "instructor" })
-        .toArray();
+      const filter = { role: "instructor" };
+
+      const result = await usersCollection.find(filter).toArray();
       res.send(result);
     });
 
@@ -162,7 +164,7 @@ async function run() {
       }
     });
 
-    app.patch("/users/admin/:id", async (req, res) => {
+    app.patch("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
 
       const updateDoc = {
@@ -175,18 +177,23 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/instructor/:id", async (req, res) => {
-      const query = { _id: new ObjectId(req.params.id) };
+    app.patch(
+      "/users/instructor/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const query = { _id: new ObjectId(req.params.id) };
 
-      const updateDoc = {
-        $set: {
-          role: "instructor",
-        },
-      };
+        const updateDoc = {
+          $set: {
+            role: "instructor",
+          },
+        };
 
-      const result = await usersCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
+        const result = await usersCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
 
     // <---classes collections apis--->
 
@@ -294,6 +301,15 @@ async function run() {
       };
 
       const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // <---bookings collection apis--->
+
+    app.post("/classBookings", async (req, res) => {
+      const classItem = req.body;
+
+      const result = await bookingsCollection.insertOne(classItem);
       res.send(result);
     });
   } finally {
