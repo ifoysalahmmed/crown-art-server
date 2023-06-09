@@ -116,7 +116,12 @@ async function run() {
       res.send(result);
     });
 
-    // 1
+    app.get("/users/instructors", async (req, res) => {
+      const result = await usersCollection
+        .find({ role: "instructor" })
+        .toArray();
+      res.send(result);
+    });
 
     app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
