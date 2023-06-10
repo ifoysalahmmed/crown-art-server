@@ -382,6 +382,27 @@ async function run() {
         });
       }
     });
+
+    // <---payments collection apis--->
+
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+
+      const classId = { _id: new ObjectId(payment.bookingItemId) };
+      const seatsToDecrease = 1;
+
+      const insertResult = await paymentsCollection.insertOne(payment);
+
+      const updateClassSeats = await classesCollection.updateOne(classId, {
+        $inc: { seats: -seatsToDecrease },
+      });
+
+      const query = { _id: new ObjectId(payment.bookedItemId) };
+
+      const deleteResult = await bookingsCollection.deleteMany(query);
+
+      res.send({ insertResult, updateClassSeats, deleteResult });
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
