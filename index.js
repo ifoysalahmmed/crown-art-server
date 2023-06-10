@@ -206,6 +206,11 @@ async function run() {
 
     // <---classes collections apis--->
 
+    app.get("/classes/admin", verifyJWT, async (req, res) => {
+      const result = await classesCollection.find().toArray();
+      res.send(result);
+    });
+
     app.get("/classes", async (req, res) => {
       const result = await classesCollection
         .find({ status: "approved" })
@@ -240,12 +245,12 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/classes", async (req, res) => {
+    app.post("/classes", verifyJWT, async (req, res) => {
       const result = await classesCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.put("/classes/:id", async (req, res) => {
+    app.put("/classes/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const info = req.body;
 
@@ -263,7 +268,7 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/classes/admin/feedback/:id", async (req, res) => {
+    app.put("/classes/admin/feedback/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const info = req.body;
 
@@ -285,7 +290,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/classes/admin/approve/:id", async (req, res) => {
+    app.patch("/classes/admin/approve/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
 
       const filter = { _id: new ObjectId(id) };
@@ -300,7 +305,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/classes/admin/deny/:id", async (req, res) => {
+    app.patch("/classes/admin/deny/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
 
       const filter = { _id: new ObjectId(id) };
