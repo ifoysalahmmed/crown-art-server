@@ -415,8 +415,16 @@ async function run() {
 
     app.get("/enrolledClasses/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const query = { email: email };
-      const result = await paymentsCollection.find(query).toArray();
+      const result = await paymentsCollection
+        .aggregate([
+          {
+            $match: {
+              email: email,
+            },
+          },
+          { $sort: { date: -1 } },
+        ])
+        .toArray();
       res.send(result);
     });
   } finally {
