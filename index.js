@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -66,6 +67,7 @@ async function run() {
     const usersCollection = client.db("crownArtDB").collection("users");
     const classesCollection = client.db("crownArtDB").collection("classes");
     const bookingsCollection = client.db("crownArtDB").collection("bookings");
+    const paymentsCollection = client.db("crownArtDB").collection("payments");
 
     // <---json web token apis--->
 
@@ -359,6 +361,26 @@ async function run() {
 
       const result = await bookingsCollection.deleteOne(query);
       res.send(result);
+    });
+
+    // <---create payment intent--->
+
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+
+      if (price) {
+        const amount = parseFloat(price) * 100;
+
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "usd",
+          payment_method_types: ["card"],
+        });
+
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      }
     });
   } finally {
     // Ensures that the client will close when you finish/error
