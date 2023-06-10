@@ -97,8 +97,6 @@ async function run() {
 
     // <---users collections apis--->
 
-    // TODO: need to fixed issue of not getting data
-
     app.get("/users/instructors", async (req, res) => {
       const filter = { role: "instructor" };
 
@@ -338,6 +336,15 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/classBookings/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+
+      const result = await bookingsCollection.findOne(query);
+      res.send(result);
+    });
+
     app.post("/classBookings", async (req, res) => {
       const classItem = req.body;
 
@@ -345,7 +352,6 @@ async function run() {
       res.send(result);
     });
 
-    // TODO: delete not working
     app.delete("/classBookings/:id", async (req, res) => {
       const id = req.params.id;
 
