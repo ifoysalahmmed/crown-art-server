@@ -403,6 +403,13 @@ async function run() {
 
       res.send({ insertResult, updateClassSeats, deleteResult });
     });
+
+    app.get("/enrolledClasses/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await paymentsCollection.find(query).toArray();
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
