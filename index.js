@@ -388,13 +388,17 @@ async function run() {
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
 
+      const insertResult = await paymentsCollection.insertOne(payment);
+
       const classId = { _id: new ObjectId(payment.bookingItemId) };
       const seatsToDecrease = 1;
 
-      const insertResult = await paymentsCollection.insertOne(payment);
+      const classData = await classesCollection.findOne(classId);
+      const currentEnrollment = classData.enrolled;
+      const newEnrollment = currentEnrollment + 1;
 
       const updateClassSeats = await classesCollection.updateOne(classId, {
-        $inc: { seats: -seatsToDecrease },
+        $inc: { seats: -seatsToDecrease, enrolled: newEnrollment },
       });
 
       const query = { _id: new ObjectId(payment.bookedItemId) };
