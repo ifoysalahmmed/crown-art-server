@@ -97,6 +97,23 @@ async function run() {
 
     // <---users collections apis--->
 
+    // TODO: need to fixed issue of not getting data
+
+    app.get("/users/instructors", async (req, res) => {
+      const filter = { role: "instructor" };
+
+      const result = await usersCollection.find(filter).toArray();
+      res.send(result);
+    });
+
+    app.get("/popularInstructors", async (req, res) => {
+      const result = await usersCollection
+        .find({ role: "instructor" })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+
     app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
@@ -123,14 +140,6 @@ async function run() {
       const user = await usersCollection.findOne(query);
 
       const result = { admin: user?.role === "admin" };
-      res.send(result);
-    });
-
-    // TODO: need to fixed issue of not getting data
-    app.get("/users/instructors", async (req, res) => {
-      const filter = { role: "instructor" };
-
-      const result = await usersCollection.find(filter).toArray();
       res.send(result);
     });
 
