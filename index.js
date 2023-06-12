@@ -222,7 +222,7 @@ async function run() {
       const result = await classesCollection
         .find({ status: "approved" })
         .limit(6)
-        .sort({ seats: -1 })
+        .sort({ enrolled: -1 })
         .toArray();
       res.send(result);
     });
