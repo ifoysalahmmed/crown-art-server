@@ -355,8 +355,19 @@ async function run() {
     app.post("/classBookings", async (req, res) => {
       const classItem = req.body;
 
-      const result = await bookingsCollection.insertOne(classItem);
-      res.send(result);
+      const existingBooking = await bookingsCollection.findOne({
+        $and: [
+          { bookedItemId: classItem?.bookedItemId },
+          { email: classItem?.email },
+        ],
+      });
+
+      if (existingBooking) {
+        res.send({ message: "Already added once!" });
+      } else {
+        const result = await bookingsCollection.insertOne(classItem);
+        res.send(result);
+      }
     });
 
     app.delete("/classBookings/:id", async (req, res) => {
