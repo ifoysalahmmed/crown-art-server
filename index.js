@@ -204,6 +204,30 @@ async function run() {
       }
     );
 
+    app.put("/instructor/:email", verifyJWT, async (req, res) => {
+      const userData = req.body;
+
+      const query = { email: req.params.email };
+
+      const user = await usersCollection.findOne(query);
+
+      const updatedDoc = {
+        $set: {
+          name: userData?.name,
+          image: userData?.image,
+          bio: userData?.bio,
+          qualification: userData?.qualification,
+          experience: userData?.experience,
+          teachingArea: userData?.teachingArea,
+        },
+      };
+
+      if (user?.role === "instructor") {
+        const result = await usersCollection.updateOne(query, updatedDoc);
+        res.send(result);
+      }
+    });
+
     // <---classes collections apis--->
 
     app.get("/classes/admin", verifyJWT, async (req, res) => {
