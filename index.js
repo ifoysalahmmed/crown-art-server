@@ -99,23 +99,15 @@ async function run() {
 
     // <---users collections apis--->
 
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
     app.get("/users/instructors", async (req, res) => {
       const filter = { role: "instructor" };
 
       const result = await usersCollection.find(filter).toArray();
-      res.send(result);
-    });
-
-    app.get("/popularInstructors", async (req, res) => {
-      const result = await usersCollection
-        .find({ role: "instructor" })
-        .limit(6)
-        .toArray();
-      res.send(result);
-    });
-
-    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
-      const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
@@ -158,6 +150,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users/:id", async (req, res) => {
+      const result = await usersCollection.findOne({
+        _id: new ObjectId(req.params.id),
+      });
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const user = req.body;
 
@@ -196,6 +195,24 @@ async function run() {
         const updateDoc = {
           $set: {
             role: "instructor",
+          },
+        };
+
+        const result = await usersCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
+
+    app.patch(
+      "/users/student/:id",
+      verifyJWT,
+      verifyAdmin,
+      async (req, res) => {
+        const query = { _id: new ObjectId(req.params.id) };
+
+        const updateDoc = {
+          $set: {
+            role: "student",
           },
         };
 
@@ -254,9 +271,7 @@ async function run() {
     app.get("/classes/:id", async (req, res) => {
       const id = req.params.id;
 
-      const query = { _id: new ObjectId(id) };
-
-      const result = await classesCollection.findOne(query);
+      const result = await classesCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
