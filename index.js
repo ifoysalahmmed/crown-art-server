@@ -65,7 +65,7 @@ async function run() {
     // <---crownArtDB collections--->
 
     const usersCollection = client.db("crownArtDB").collection("users");
-    const classesCollection = client.db("crownArtDB").collection("classes");
+    const coursesCollection = client.db("crownArtDB").collection("courses");
     const bookingsCollection = client.db("crownArtDB").collection("bookings");
     const paymentsCollection = client.db("crownArtDB").collection("payments");
 
@@ -100,7 +100,9 @@ async function run() {
     // <---users collections apis--->
 
     app.get("/users", async (req, res) => {
-      const result = await usersCollection.find().toArray();
+      const result = await usersCollection
+        .aggregate([{ $sort: { role: 1 } }])
+        .toArray();
       res.send(result);
     });
 
@@ -159,6 +161,7 @@ async function run() {
 
     app.post("/users", async (req, res) => {
       const user = req.body;
+      const updatedUser = { ...user, role: "student" };
 
       const query = { email: user.email };
 
@@ -167,7 +170,7 @@ async function run() {
       if (existingUser) {
         res.send({ message: "user already exists" });
       } else {
-        const result = await usersCollection.insertOne(user);
+        const result = await usersCollection.insertOne(updatedUser);
         res.send(result);
       }
     });
@@ -245,22 +248,24 @@ async function run() {
       }
     });
 
-    // <---classes collections apis--->
+    // <---courses collections apis--->
 
-    app.get("/classes/admin", verifyJWT, async (req, res) => {
-      const result = await classesCollection.find().toArray();
+    app.get("/courses/admin", verifyJWT, async (req, res) => {
+      const result = await coursesCollection
+        .aggregate([{ $sort: { status: -1 } }])
+        .toArray();
       res.send(result);
     });
 
-    app.get("/classes", async (req, res) => {
-      const result = await classesCollection
+    app.get("/courses", async (req, res) => {
+      const result = await coursesCollection
         .find({ status: "approved" })
         .toArray();
       res.send(result);
     });
 
-    app.get("/popularClasses", async (req, res) => {
-      const result = await classesCollection
+    app.get("/popularCourses", async (req, res) => {
+      const result = await coursesCollection
         .find({ status: "approved" })
         .limit(6)
         .sort({ enrolled: -1 })
@@ -268,28 +273,28 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/classes/:id", async (req, res) => {
+    app.get("/courses/:id", async (req, res) => {
       const id = req.params.id;
 
-      const result = await classesCollection.findOne({ _id: new ObjectId(id) });
+      const result = await coursesCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
 
-    app.get("/classes/instructor/:email", verifyJWT, async (req, res) => {
+    app.get("/courses/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
 
       const query = { email: email };
 
-      const result = await classesCollection.find(query).toArray();
+      const result = await coursesCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.post("/classes", verifyJWT, async (req, res) => {
-      const result = await classesCollection.insertOne(req.body);
+    app.post("/courses", verifyJWT, async (req, res) => {
+      const result = await coursesCollection.insertOne(req.body);
       res.send(result);
     });
 
-    app.put("/classes/:id", verifyJWT, async (req, res) => {
+    app.put("/courses/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const info = req.body;
 
@@ -298,16 +303,19 @@ async function run() {
       const updateDoc = {
         $set: {
           name: info.name,
+          image: info.image,
+          description: info.description,
           seats: info.seats,
           price: info.price,
+          status: info.status,
         },
       };
 
-      const result = await classesCollection.updateOne(filter, updateDoc);
+      const result = await coursesCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
-    app.put("/classes/admin/feedback/:id", verifyJWT, async (req, res) => {
+    app.put("/courses/admin/feedback/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const info = req.body;
 
@@ -321,7 +329,7 @@ async function run() {
         },
       };
 
-      const result = await classesCollection.updateOne(
+      const result = await coursesCollection.updateOne(
         query,
         updateDoc,
         options
@@ -329,7 +337,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/classes/admin/approve/:id", verifyJWT, async (req, res) => {
+    app.patch("/courses/admin/approve/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
 
       const filter = { _id: new ObjectId(id) };
@@ -340,11 +348,11 @@ async function run() {
         },
       };
 
-      const result = await classesCollection.updateOne(filter, updateDoc);
+      const result = await coursesCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
-    app.patch("/classes/admin/deny/:id", verifyJWT, async (req, res) => {
+    app.patch("/courses/admin/deny/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
 
       const filter = { _id: new ObjectId(id) };
@@ -355,13 +363,20 @@ async function run() {
         },
       };
 
-      const result = await classesCollection.updateOne(filter, updateDoc);
+      const result = await coursesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.delete("/courses/:id", verifyJWT, async (req, res) => {
+      const result = await coursesCollection.deleteOne({
+        _id: new ObjectId(req.params.id),
+      });
       res.send(result);
     });
 
     // <---bookings collection apis--->
 
-    app.get("/classBookings", verifyJWT, async (req, res) => {
+    app.get("/courseBookings", verifyJWT, async (req, res) => {
       const email = req.query.email;
 
       if (!email) {
@@ -382,7 +397,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/classBookings/:id", verifyJWT, async (req, res) => {
+    app.get("/courseBookings/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
 
       const query = { _id: new ObjectId(id) };
@@ -391,25 +406,25 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/classBookings", async (req, res) => {
-      const classItem = req.body;
+    app.post("/courseBookings", async (req, res) => {
+      const courseItem = req.body;
 
       const existingBooking = await bookingsCollection.findOne({
         $and: [
-          { bookedItemId: classItem?.bookedItemId },
-          { email: classItem?.email },
+          { bookedItemId: courseItem?.bookedItemId },
+          { email: courseItem?.email },
         ],
       });
 
       if (existingBooking) {
         res.send({ message: "Already added once!" });
       } else {
-        const result = await bookingsCollection.insertOne(classItem);
+        const result = await bookingsCollection.insertOne(courseItem);
         res.send(result);
       }
     });
 
-    app.delete("/classBookings/:id", async (req, res) => {
+    app.delete("/courseBookings/:id", async (req, res) => {
       const id = req.params.id;
 
       const query = { _id: new ObjectId(id) };
@@ -445,14 +460,14 @@ async function run() {
 
       const insertResult = await paymentsCollection.insertOne(payment);
 
-      const classId = { _id: new ObjectId(payment.bookingItemId) };
+      const courseId = { _id: new ObjectId(payment.bookingItemId) };
       const seatsToDecrease = 1;
 
-      const classData = await classesCollection.findOne(classId);
-      const currentEnrollment = classData.enrolled;
+      const courseData = await coursesCollection.findOne(courseId);
+      const currentEnrollment = courseData.enrolled;
       const newEnrollment = currentEnrollment + 1;
 
-      const updateClassSeats = await classesCollection.updateOne(classId, {
+      const updateCourseSeats = await coursesCollection.updateOne(courseId, {
         $inc: { seats: -seatsToDecrease, enrolled: newEnrollment },
       });
 
@@ -460,10 +475,10 @@ async function run() {
 
       const deleteResult = await bookingsCollection.deleteMany(query);
 
-      res.send({ insertResult, updateClassSeats, deleteResult });
+      res.send({ insertResult, updateCourseSeats, deleteResult });
     });
 
-    app.get("/enrolledClasses/:email", verifyJWT, async (req, res) => {
+    app.get("/enrolledCourses/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const result = await paymentsCollection
         .aggregate([
